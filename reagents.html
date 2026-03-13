@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>特殊试剂台账 - 黄永业课题组</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .reagent-table th {
+            background-color: #f0f7ff;
+        }
+        .required::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+        .expiry-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            font-weight: bold;
+        }
+        .expiry-expired {
+            background-color: #f8d7da;
+            color: #721c24;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header class="page-header">
+        <div class="header-content">
+            <h1>黄永业课题组</h1>
+            <p class="subtitle">特殊试剂台账管理系统</p>
+        </div>
+        <div class="user-info">
+            <span id="currentUser">加载中...</span>
+            <button class="btn btn-sm" onclick="location.href='homepage.html'">返回主页</button>
+            <button class="btn btn-sm btn-logout" onclick="handleLogout()">退出</button>
+        </div>
+    </header>
+    
+    <nav class="page-nav">
+        <button class="nav-btn" onclick="location.href='primers.html'">🧬 引物</button>
+        <button class="nav-btn" onclick="location.href='plasmids.html'">🧫 质粒</button>
+        <button class="nav-btn" onclick="location.href='sirnas.html'">🔬 siRNA</button>
+        <button class="nav-btn" onclick="location.href='antibodies.html'">💉 抗体</button>
+        <button class="nav-btn active" onclick="location.href='reagents.html'">🧪 特殊试剂</button>
+    </nav>
+    
+    <main class="page-main">
+        <div class="action-bar">
+            <h2>🧪 特殊试剂台账列表</h2>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="showReagentUploadForm()">+ 上传新试剂</button>
+                <button class="btn btn-secondary" onclick="exportReagentTable()">📥 导出Excel</button>
+            </div>
+        </div>
+        
+        <div class="search-bar">
+            <input type="text" id="search-reagent" class="search-input" placeholder="搜索试剂名称、公司、用途..." onkeyup="searchReagentTable()">
+            <select id="filter-reagent" class="search-select" onchange="searchReagentTable()">
+                <option value="all">全部试剂</option>
+                <option value="expiring">即将过期（30天内）</option>
+                <option value="expired">已过期</option>
+                <option value="mine">我添加的</option>
+            </select>
+        </div>
+        
+        <div class="table-container">
+            <table class="data-table reagent-table" id="reagent-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>名称</th>
+                        <th>用途</th>
+                        <th>公司</th>
+                        <th>货号</th>
+                        <th>有效期</th>
+                        <th>到货日期</th>
+                        <th>存储位置</th>
+                        <th>备注</th>
+                        <th>添加人</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="reagent-tbody">
+                    <!-- JavaScript动态加载 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination" id="reagent-pagination"></div>
+    </main>
+    
+    <!-- 上传表单弹窗 -->
+    <div id="reagentUploadModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>上传新特殊试剂</h3>
+                <span class="close" onclick="hideReagentUploadForm()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="reagentUploadForm" onsubmit="return handleReagentUpload(event)">
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">试剂名称</span></label>
+                            <input type="text" id="reagent-name" class="form-input" required placeholder="例如: Protease Inhibitor Cocktail">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">用途</span></label>
+                            <input type="text" id="reagent-usage" class="form-input" required placeholder="例如: 蛋白提取时添加">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">公司</span></label>
+                            <input type="text" id="reagent-company" class="form-input" required placeholder="例如: Roche/Sigma">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">货号</span></label>
+                            <input type="text" id="reagent-catalog" class="form-input" required placeholder="例如: 04693159001">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">有效期</span></label>
+                            <input type="date" id="reagent-expiry" class="form-input" required>
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">到货日期</span></label>
+                            <input type="date" id="reagent-date" class="form-input" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><span class="required">存储位置</span></label>
+                        <input type="text" id="reagent-location" class="form-input" required placeholder="例如: -20度冰柜第三层/4度冰箱门">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>备注（特殊组分/储存要求）</label>
+                        <textarea id="reagent-notes" class="form-input" rows="3" placeholder="例如: 避光保存 / 分装后-80度长期保存 / 有毒试剂需登记使用"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">提交</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideReagentUploadForm()">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 详情查看弹窗 -->
+    <div id="detailModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>试剂详细信息</h3>
+                <span class="close" onclick="hideDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="reagentDetailContent"></div>
+        </div>
+    </div>
+    
+    <footer class="page-footer">
+        <div class="footer-content">
+            <p>最后更新日期: <span id="lastUpdate"></span></p>
+            <p>卢丽婷 · 课题组管理员</p>
+        </div>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>

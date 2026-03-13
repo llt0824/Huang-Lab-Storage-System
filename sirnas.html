@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>siRNA台账 - 黄永业课题组</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .sirna-table th {
+            background-color: #f0f7ff;
+        }
+        .sirna-table .sequence {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-width: 150px;
+            word-break: break-all;
+        }
+        .required::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+        .stock-low {
+            background-color: #fff3cd;
+            color: #856404;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header class="page-header">
+        <div class="header-content">
+            <h1>黄永业课题组</h1>
+            <p class="subtitle">siRNA台账 - 网格化管理系统</p>
+        </div>
+        <div class="user-info">
+            <span id="currentUser">加载中...</span>
+            <button class="btn btn-sm" onclick="location.href='homepage.html'">返回主页</button>
+            <button class="btn btn-sm btn-logout" onclick="handleLogout()">退出</button>
+        </div>
+    </header>
+    
+    <nav class="page-nav">
+        <button class="nav-btn" onclick="location.href='primers.html'">🧬 引物</button>
+        <button class="nav-btn" onclick="location.href='plasmids.html'">🧫 质粒</button>
+        <button class="nav-btn active" onclick="location.href='sirnas.html'">🔬 siRNA</button>
+        <button class="nav-btn" onclick="location.href='antibodies.html'">💉 抗体</button>
+        <button class="nav-btn" onclick="location.href='reagents.html'">🧪 特殊试剂</button>
+    </nav>
+    
+    <main class="page-main">
+        <div class="action-bar">
+            <h2>🔬 siRNA台账列表</h2>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="showSirnaUploadForm()">+ 上传新siRNA</button>
+                <button class="btn btn-secondary" onclick="exportSirnaTable()">📥 导出Excel</button>
+            </div>
+        </div>
+        
+        <div class="search-bar">
+            <input type="text" id="search-sirna" class="search-input" placeholder="搜索基因名、序列、公司..." onkeyup="searchSirnaTable()">
+            <select id="filter-sirna" class="search-select" onchange="searchSirnaTable()">
+                <option value="all">全部siRNA</option>
+                <option value="mine">我合成的</option>
+                <option value="low-stock">储量不足</option>
+                <option value="modified">有修饰</option>
+            </select>
+        </div>
+        
+        <div class="table-container">
+            <table class="data-table sirna-table" id="sirna-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>基因名</th>
+                        <th>正义链</th>
+                        <th>反义链</th>
+                        <th>序列来源</th>
+                        <th>修饰</th>
+                        <th>合成公司</th>
+                        <th>合成人</th>
+                        <th>合成日期</th>
+                        <th>剩余储量</th>
+                        <th>备注</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="sirna-tbody">
+                    <!-- JavaScript动态加载 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination" id="sirna-pagination"></div>
+    </main>
+    
+    <!-- 上传表单弹窗 -->
+    <div id="sirnaUploadModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>上传新siRNA</h3>
+                <span class="close" onclick="hideSirnaUploadForm()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="sirnaUploadForm" onsubmit="return handleSirnaUpload(event)">
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">基因名</span></label>
+                            <input type="text" id="sirna-gene" class="form-input" required placeholder="例如: GAPDH">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">合成日期</span></label>
+                            <input type="date" id="sirna-date" class="form-input" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">正义链</span></label>
+                            <input type="text" id="sirna-sense" class="form-input" required placeholder="5'→3'序列">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">反义链</span></label>
+                            <input type="text" id="sirna-antisense" class="form-input" required placeholder="5'→3'序列">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><span class="required">序列来源</span></label>
+                        <select id="sirna-source" class="form-input" required>
+                            <option value="">请选择来源</option>
+                            <option value="PubMed文献">PubMed文献</option>
+                            <option value="自己设计">自己设计</option>
+                            <option value="实验室已有">实验室已有</option>
+                            <option value="公司设计">公司设计</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>是否有修饰</label>
+                        <div class="radio-group" style="display: flex; gap: 20px;">
+                            <label>
+                                <input type="radio" name="sirna-modified" value="无修饰" checked> 无修饰
+                            </label>
+                            <label>
+                                <input type="radio" name="sirna-modified" value="胆固醇修饰"> 胆固醇修饰
+                            </label>
+                            <label>
+                                <input type="radio" name="sirna-modified" value="硫代磷酸修饰"> 硫代磷酸修饰
+                            </label>
+                            <label>
+                                <input type="radio" name="sirna-modified" value="2'-OMe修饰"> 2'-OMe修饰
+                            </label>
+                            <label>
+                                <input type="radio" name="sirna-modified" value="荧光标记"> 荧光标记
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">合成公司</span></label>
+                            <input type="text" id="sirna-company" class="form-input" required placeholder="例如: 吉玛/锐博">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">合成人</span></label>
+                            <input type="text" id="sirna-synthesizer" class="form-input" required placeholder="你的名字">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><span class="required">剩余储量 (nmol/OD)</span></label>
+                        <input type="number" id="sirna-stock" class="form-input" required min="0" step="0.1" placeholder="例如: 20">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>备注（可选）</label>
+                        <textarea id="sirna-notes" class="form-input" rows="2" placeholder="例如: 分装5管，-80度保存"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">提交</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideSirnaUploadForm()">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 详情查看弹窗 -->
+    <div id="detailModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>siRNA详细信息</h3>
+                <span class="close" onclick="hideDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="sirnaDetailContent"></div>
+        </div>
+    </div>
+    
+    <footer class="page-footer">
+        <div class="footer-content">
+            <p>最后更新日期: <span id="lastUpdate"></span></p>
+            <p>卢丽婷 · 课题组管理员</p>
+        </div>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>

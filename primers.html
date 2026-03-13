@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>引物台账 - 黄永业课题组</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .primer-table th {
+            background-color: #f0f7ff;
+        }
+        .primer-table td {
+            font-size: 0.9rem;
+        }
+        .primer-table .sequence {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-width: 200px;
+            word-break: break-all;
+        }
+        .required::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+        .storage-location {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="page-header">
+        <div class="header-content">
+            <h1>黄永业课题组</h1>
+            <p class="subtitle">引物台账 - 网格化管理系统</p>
+        </div>
+        <div class="user-info">
+            <span id="currentUser">加载中...</span>
+            <button class="btn btn-sm" onclick="location.href='homepage.html'">返回主页</button>
+            <button class="btn btn-sm btn-logout" onclick="handleLogout()">退出</button>
+        </div>
+    </header>
+    
+    <nav class="page-nav">
+        <button class="nav-btn active" onclick="location.href='primers.html'">🧬 引物</button>
+        <button class="nav-btn" onclick="location.href='plasmids.html'">🧫 质粒</button>
+        <button class="nav-btn" onclick="location.href='sirnas.html'">🔬 siRNA</button>
+        <button class="nav-btn" onclick="location.href='antibodies.html'">💉 抗体</button>
+        <button class="nav-btn" onclick="location.href='reagents.html'">🧪 特殊试剂</button>
+    </nav>
+    
+    <main class="page-main">
+        <div class="action-bar">
+            <h2>🧬 引物台账列表</h2>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="showPrimerUploadForm()">+ 上传新引物</button>
+                <button class="btn btn-secondary" onclick="exportPrimerTable()">📥 导出Excel</button>
+            </div>
+        </div>
+        
+        <div class="search-bar">
+            <input type="text" id="search-primer" class="search-input" placeholder="搜索基因名称、用途、序列..." onkeyup="searchPrimerTable()">
+            <select id="filter-primer" class="search-select" onchange="searchPrimerTable()">
+                <option value="all">全部引物</option>
+                <option value="mine">我合成的</option>
+                <option value="recent">最近30天</option>
+            </select>
+        </div>
+        
+        <div class="table-container">
+            <table class="data-table primer-table" id="primer-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>基因名称</th>
+                        <th>物种</th>
+                        <th>用途</th>
+                        <th>F序列 (5'→3')</th>
+                        <th>R序列 (5'→3')</th>
+                        <th>序列来源</th>
+                        <th>合成公司</th>
+                        <th>合成人</th>
+                        <th>合成时间</th>
+                        <th>储存位置</th>
+                        <th>备注</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="primer-tbody">
+                    <!-- JavaScript动态加载 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination" id="primer-pagination"></div>
+    </main>
+    
+    <!-- 上传表单弹窗 -->
+    <div id="primerUploadModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>上传新引物</h3>
+                <span class="close" onclick="hidePrimerUploadForm()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="primerUploadForm" onsubmit="return handlePrimerUpload(event)">
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">基因名称</span></label>
+                            <input type="text" id="primer-gene" class="form-input" required placeholder="例如: GAPDH">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">物种</span></label>
+                            <input type="text" id="primer-species" class="form-input" required placeholder="例如: Human/Mouse/Rat">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><span class="required">用途</span></label>
+                        <textarea id="primer-usage" class="form-input" required rows="2" placeholder="例如: qPCR检测GAPDH内参基因表达"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">F序列 (5'→3')</span></label>
+                            <input type="text" id="primer-f-seq" class="form-input" required placeholder="ATCG...">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">R序列 (5'→3')</span></label>
+                            <input type="text" id="primer-r-seq" class="form-input" required placeholder="ATCG...">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><span class="required">序列来源</span></label>
+                        <select id="primer-source" class="form-input" required>
+                            <option value="">请选择来源</option>
+                            <option value="PubMed文献">PubMed文献</option>
+                            <option value="PrimerBank">PrimerBank</option>
+                            <option value="自己设计">自己设计</option>
+                            <option value="实验室已有">实验室已有</option>
+                            <option value="公司设计">公司设计</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">合成公司</span></label>
+                            <input type="text" id="primer-company" class="form-input" required placeholder="例如: 生工/金斯瑞/华大">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">合成人</span></label>
+                            <input type="text" id="primer-synthesizer" class="form-input" required placeholder="你的名字">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">合成时间</span></label>
+                            <input type="date" id="primer-date" class="form-input" required>
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">储存位置</span></label>
+                            <input type="text" id="primer-location" class="form-input" required placeholder="例如: 引物盒A-01">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>备注（可选）</label>
+                        <textarea id="primer-notes" class="form-input" rows="2" placeholder="例如: 浓度100μM，分装5管"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">提交</button>
+                        <button type="button" class="btn btn-secondary" onclick="hidePrimerUploadForm()">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 详情查看弹窗 -->
+    <div id="detailModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>引物详细信息</h3>
+                <span class="close" onclick="hideDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="primerDetailContent"></div>
+        </div>
+    </div>
+    
+    <footer class="page-footer">
+        <div class="footer-content">
+            <p>最后更新日期: <span id="lastUpdate"></span></p>
+            <p>卢丽婷 · 课题组管理员</p>
+        </div>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>

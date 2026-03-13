@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主页 - 黄永业课题组</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 主页专用样式 */
+        .user-menu-section {
+            margin: 2rem auto;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            max-width: 600px;
+        }
+        
+        .user-menu-section .btn {
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            border-radius: 40px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        
+        .user-menu-section .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(43, 90, 140, 0.3);
+        }
+        
+        .welcome-banner {
+            background: linear-gradient(135deg, #2b5a8c 0%, #1e3a5f 100%);
+            color: white;
+            text-align: center;
+            padding: 2.5rem 2rem;
+            margin-bottom: 2rem;
+            border-radius: 0 0 30px 30px;
+        }
+        
+        .welcome-banner h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .welcome-banner p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .homepage-main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 2rem 3rem;
+            flex: 1;
+        }
+        
+        /* 网格布局：上面三个，下面两个 */
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* 第二行两个卡片居中 */
+        .card-container-second {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .nav-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem 1rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            border: 1px solid rgba(43, 90, 140, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .nav-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 30px rgba(43, 90, 140, 0.15);
+            border-color: #2b5a8c;
+        }
+        
+        .card-icon {
+            font-size: 2.8rem;
+            margin-bottom: 0.8rem;
+        }
+        
+        .nav-card h3 {
+            color: #1e3a5f;
+            font-size: 1.3rem;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+        }
+        
+        .nav-card p {
+            color: #4a5f73;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            flex-grow: 1;
+            line-height: 1.4;
+        }
+        
+        .card-stats {
+            background: #f0f4f8;
+            padding: 0.4rem;
+            border-radius: 30px;
+            margin: 0.3rem 0 0.8rem;
+            color: #2b5a8c;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .card-btn {
+            background: transparent;
+            border: 2px solid #2b5a8c;
+            color: #2b5a8c;
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 0.85rem;
+        }
+        
+        .card-btn:hover {
+            background: #2b5a8c;
+            color: white;
+        }
+        
+        .quick-upload {
+            background: white;
+            border-radius: 20px;
+            padding: 1.8rem;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            margin-top: 2rem;
+        }
+        
+        .quick-upload h3 {
+            color: #1e3a5f;
+            margin-bottom: 1.2rem;
+            font-size: 1.2rem;
+        }
+        
+        .quick-buttons {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .quick-buttons .btn {
+            padding: 0.6rem 1.5rem;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .card-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .card-container-second {
+                grid-template-columns: 1fr;
+                max-width: 100%;
+            }
+            
+            .welcome-banner h2 {
+                font-size: 1.5rem;
+            }
+            
+            .user-menu-section {
+                flex-direction: column;
+                padding: 0 1rem;
+            }
+            
+            .quick-buttons {
+                flex-direction: column;
+            }
+            
+            .quick-buttons .btn {
+                width: 100%;
+            }
+        }
+        
+        /* 小屏幕适配 */
+        @media (min-width: 769px) and (max-width: 900px) {
+            .card-container {
+                gap: 1rem;
+            }
+            
+            .nav-card h3 {
+                font-size: 1.1rem;
+            }
+            
+            .card-icon {
+                font-size: 2.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 页头：黄永业课题组引物/质粒/siRNA/抗体/特殊试剂库 -->
+    <header class="main-header">
+        <div class="header-content">
+            <h1>黄永业课题组</h1>
+            <p class="subtitle">引物 · 质粒 · siRNA · 抗体 · 特殊试剂</p>
+        </div>
+        <div class="user-info">
+            <span id="currentUser">加载中...</span>
+            <button class="btn btn-sm" onclick="location.href='profile.html'">个人中心</button>
+            <button class="btn btn-sm btn-logout" onclick="handleLogout()">退出登录</button>
+        </div>
+    </header>
+    
+    <!-- 欢迎区域 -->
+    <div class="welcome-banner">
+        <h2>欢迎使用课题组综合管理系统</h2>
+        <p>请选择要管理的台账类型</p>
+    </div>
+    
+    <!-- 用户菜单区域 -->
+    <div class="user-menu-section">
+        <button class="btn btn-primary" onclick="location.href='profile.html'">
+            👤 个人中心
+        </button>
+        <button class="btn btn-secondary" onclick="location.href='admin-users.html'" id="adminManageBtn" style="display: none;">
+            👥 用户管理
+        </button>
+    </div>
+    
+    <!-- 导航卡片：上面三个 -->
+    <main class="homepage-main">
+        <div class="card-container">
+            <!-- 质粒卡片 -->
+            <div class="nav-card" onclick="location.href='plasmids.html'">
+                <div class="card-icon">🧫</div>
+                <h3>质粒台账</h3>
+                <p>表达载体、克隆载体、病毒载体</p>
+                <div class="card-stats" id="plasmid-count">加载中...</div>
+                <button class="card-btn">进入管理 →</button>
+            </div>
+            
+            <!-- 引物卡片 -->
+            <div class="nav-card" onclick="location.href='primers.html'">
+                <div class="card-icon">🧬</div>
+                <h3>引物台账</h3>
+                <p>PCR引物、qPCR引物、测序引物</p>
+                <div class="card-stats" id="primer-count">加载中...</div>
+                <button class="card-btn">进入管理 →</button>
+            </div>
+            
+            <!-- siRNA卡片 -->
+            <div class="nav-card" onclick="location.href='sirnas.html'">
+                <div class="card-icon">🔬</div>
+                <h3>siRNA台账</h3>
+                <p>干扰RNA、修饰siRNA、荧光标记</p>
+                <div class="card-stats" id="sirna-count">加载中...</div>
+                <button class="card-btn">进入管理 →</button>
+            </div>
+        </div>
+        
+        <!-- 下面两个卡片（居中） -->
+        <div class="card-container-second">
+            <!-- 抗体卡片 -->
+            <div class="nav-card" onclick="location.href='antibodies.html'">
+                <div class="card-icon">💉</div>
+                <h3>抗体台账</h3>
+                <p>一抗、二抗、其他抗体及储存位置</p>
+                <div class="card-stats" id="antibody-count">加载中...</div>
+                <button class="card-btn">进入管理 →</button>
+            </div>
+            
+            <!-- 特殊试剂卡片 -->
+            <div class="nav-card" onclick="location.href='reagents.html'">
+                <div class="card-icon">🧪</div>
+                <h3>特殊试剂台账</h3>
+                <p>蛋白酶抑制剂、转染试剂、酶等</p>
+                <div class="card-stats" id="reagent-count">加载中...</div>
+                <button class="card-btn">进入管理 →</button>
+            </div>
+        </div>
+        
+        <!-- 快速上传区域 -->
+        <div class="quick-upload">
+            <h3>📤 快速上传</h3>
+            <div class="quick-buttons">
+                <button class="btn btn-primary" onclick="location.href='primers.html?action=upload'">引物</button>
+                <button class="btn btn-primary" onclick="location.href='plasmids.html?action=upload'">质粒</button>
+                <button class="btn btn-primary" onclick="location.href='sirnas.html?action=upload'">siRNA</button>
+                <button class="btn btn-primary" onclick="location.href='antibodies.html?action=upload'">抗体</button>
+                <button class="btn btn-primary" onclick="location.href='reagents.html?action=upload'">特殊试剂</button>
+            </div>
+        </div>
+        
+        <!-- 用户名单将动态显示在这里 -->
+    </main>
+    
+    <!-- 页脚：最后更新日期、卢丽婷 -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>最后更新日期: <span id="lastUpdate"></span></p>
+            <p>卢丽婷 · 课题组管理员</p>
+        </div>
+    </footer>
+    
+    <script src="script.js"></script>
+    <script>
+        // 主页专用脚本：控制管理员按钮显示
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查当前用户是否为管理员
+            const user = (function() {
+                let u = JSON.parse(localStorage.getItem('current_user'));
+                if (!u) u = JSON.parse(sessionStorage.getItem('current_user'));
+                return u;
+            })();
+            
+            const adminBtn = document.getElementById('adminManageBtn');
+            if (adminBtn && user && user.username === 'luliting') {
+                adminBtn.style.display = 'inline-block';
+            }
+        });
+    </script>
+</body>
+</html>

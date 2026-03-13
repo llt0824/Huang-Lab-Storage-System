@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>质粒台账 - 黄永业课题组</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .plasmid-table th {
+            background-color: #f0f7ff;
+        }
+        .required::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+        .optional {
+            color: #999;
+            font-size: 0.8rem;
+            margin-left: 4px;
+        }
+        .storage-location {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="page-header">
+        <div class="header-content">
+            <h1>黄永业课题组</h1>
+            <p class="subtitle">质粒台账 - 网格化管理系统</p>
+        </div>
+        <div class="user-info">
+            <span id="currentUser">加载中...</span>
+            <button class="btn btn-sm" onclick="location.href='homepage.html'">返回主页</button>
+            <button class="btn btn-sm btn-logout" onclick="handleLogout()">退出</button>
+        </div>
+    </header>
+    
+    <nav class="page-nav">
+        <button class="nav-btn" onclick="location.href='primers.html'">🧬 引物</button>
+        <button class="nav-btn active" onclick="location.href='plasmids.html'">🧫 质粒</button>
+        <button class="nav-btn" onclick="location.href='sirnas.html'">🔬 siRNA</button>
+        <button class="nav-btn" onclick="location.href='antibodies.html'">💉 抗体</button>
+        <button class="nav-btn" onclick="location.href='reagents.html'">🧪 特殊试剂</button>
+    </nav>
+    
+    <main class="page-main">
+        <div class="action-bar">
+            <h2>🧫 质粒台账列表</h2>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="showPlasmidUploadForm()">+ 上传新质粒</button>
+                <button class="btn btn-secondary" onclick="exportPlasmidTable()">📥 导出Excel</button>
+            </div>
+        </div>
+        
+        <div class="search-bar">
+            <input type="text" id="search-plasmid" class="search-input" placeholder="搜索质粒名称、特征、持有人..." onkeyup="searchPlasmidTable()">
+            <select id="filter-plasmid" class="search-select" onchange="searchPlasmidTable()">
+                <option value="all">全部质粒</option>
+                <option value="mine">我持有的</option>
+                <option value="recent">最近30天</option>
+            </select>
+        </div>
+        
+        <div class="table-container">
+            <table class="data-table plasmid-table" id="plasmid-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>质粒名称</th>
+                        <th>大小(bp)</th>
+                        <th>抗性</th>
+                        <th>特征与用途</th>
+                        <th>持有人</th>
+                        <th>上传日期</th>
+                        <th>Addgene序号</th>
+                        <th>存放位置</th>
+                        <th>备注</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="plasmid-tbody">
+                    <!-- JavaScript动态加载 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination" id="plasmid-pagination"></div>
+    </main>
+    
+    <!-- 上传表单弹窗 -->
+    <div id="plasmidUploadModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>上传新质粒</h3>
+                <span class="close" onclick="hidePlasmidUploadForm()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="plasmidUploadForm" onsubmit="return handlePlasmidUpload(event)">
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">质粒名称</span></label>
+                            <input type="text" id="plasmid-name" class="form-input" required placeholder="例如: pET-28a(+)">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">大小(bp)</span></label>
+                            <input type="number" id="plasmid-size" class="form-input" required placeholder="5369">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">抗性</span></label>
+                            <input type="text" id="plasmid-resistance" class="form-input" required placeholder="Kanamycin/Ampicillin">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">持有人</span></label>
+                            <input type="text" id="plasmid-holder" class="form-input" required placeholder="持有人姓名">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><span class="required">特征与用途</span></label>
+                        <textarea id="plasmid-feature" class="form-input" required rows="3" placeholder="例如: N-terminal His-Tag, T7lac promoter, 用于原核表达"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Addgene序号 <span class="optional">(可选)</span></label>
+                            <input type="text" id="plasmid-addgene" class="form-input" placeholder="例如: #12345">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">上传日期</span></label>
+                            <input type="date" id="plasmid-date" class="form-input" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">存放位置</span></label>
+                            <input type="text" id="plasmid-location" class="form-input" required placeholder="例如: 质粒A盒-01">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>备注 <span class="optional">(可选，如存储浓度)</span></label>
+                        <textarea id="plasmid-notes" class="form-input" rows="2" placeholder="例如: 浓度500ng/μL，-20度保存"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">提交</button>
+                        <button type="button" class="btn btn-secondary" onclick="hidePlasmidUploadForm()">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 详情查看弹窗 -->
+    <div id="detailModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>质粒详细信息</h3>
+                <span class="close" onclick="hideDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="plasmidDetailContent"></div>
+        </div>
+    </div>
+    
+    <footer class="page-footer">
+        <div class="footer-content">
+            <p>最后更新日期: <span id="lastUpdate"></span></p>
+            <p>卢丽婷 · 课题组管理员</p>
+        </div>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 黄永业课题组</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .profile-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .profile-avatar {
+            width: 60px;
+            height: 60px;
+            background: #2b5a8c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .profile-title h2 {
+            color: #1e3a5f;
+            margin-bottom: 0.3rem;
+        }
+        .profile-title p {
+            color: #4a5f73;
+            font-size: 0.9rem;
+        }
+        .profile-form {
+            margin-top: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2d3f53;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #dde7f0;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #2b5a8c;
+        }
+        .form-group input[readonly] {
+            background: #f0f4f8;
+            cursor: not-allowed;
+        }
+        .info-note {
+            background: #e8f4fd;
+            border-left: 4px solid #2b5a8c;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #1e3a5f;
+        }
+        .password-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px dashed #dde7f0;
+        }
+        .password-section h3 {
+            color: #1e3a5f;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        .btn-reset-password {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .btn-reset-password:hover {
+            background: #d97706;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .btn-save {
+            background: #2b5a8c;
+            color: white;
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-save:hover {
+            background: #1e3a5f;
+        }
+        .btn-cancel {
+            background: #e2e8f0;
+            color: #4a5568;
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-cancel:hover {
+            background: #cbd5e0;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+        .message.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <header class="page-header">
+        <div class="header-content">
+            <h1>黄永业课题组</h1>
+            <p class="subtitle">个人中心</p>
+        </div>
+        <div class="user-info">
+            <span id="currentUser">加载中...</span>
+            <button class="btn btn-sm" onclick="location.href='homepage.html'">返回主页</button>
+            <button class="btn btn-sm btn-logout" onclick="handleLogout()">退出</button>
+        </div>
+    </header>
+
+    <main class="profile-container">
+        <div class="profile-header">
+            <div class="profile-avatar" id="userAvatar">👤</div>
+            <div class="profile-title">
+                <h2 id="displayName">加载中...</h2>
+                <p id="userRole">普通用户</p>
+            </div>
+        </div>
+
+        <div id="profileMessage" class="message"></div>
+
+        <form id="profileForm" onsubmit="return handleProfileUpdate(event)">
+            <div class="profile-form">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="profile-username" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label>姓名</label>
+                    <input type="text" id="profile-name" required placeholder="请输入您的姓名">
+                </div>
+                
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="profile-email" required placeholder="请输入邮箱">
+                </div>
+                
+                <div class="info-note">
+                    <strong>📌 提示：</strong> 修改个人信息后点击"保存修改"即可更新。
+                </div>
+
+                <div class="password-section">
+                    <h3>🔐 密码管理</h3>
+                    <button type="button" class="btn-reset-password" onclick="showChangePasswordModal()">
+                        修改密码
+                    </button>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="submit" class="btn-save">保存修改</button>
+                    <button type="button" class="btn-cancel" onclick="location.href='homepage.html'">取消</button>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <!-- 修改密码弹窗 -->
+    <div id="passwordModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>修改密码</h3>
+                <span class="close" onclick="hidePasswordModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm" onsubmit="return handlePasswordChange(event)">
+                    <div class="form-group">
+                        <label>当前密码</label>
+                        <input type="password" id="current-password" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>新密码</label>
+                        <input type="password" id="new-password" class="form-input" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label>确认新密码</label>
+                        <input type="password" id="confirm-password" class="form-input" required minlength="6">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">确认修改</button>
+                        <button type="button" class="btn btn-secondary" onclick="hidePasswordModal()">取消</button>
+                    </div>
+                </form>
+                <div id="passwordMessage" class="message" style="margin-top: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理员重置密码弹窗（仅管理员可见） -->
+    <div id="adminResetModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>管理员重置密码</h3>
+                <span class="close" onclick="hideAdminResetModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="adminResetForm" onsubmit="return handleAdminResetPassword(event)">
+                    <div class="form-group">
+                        <label>选择用户</label>
+                        <select id="reset-user-select" class="form-input" required>
+                            <option value="">请选择用户</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>新密码</label>
+                        <input type="text" id="reset-new-password" class="form-input" value="123456" required>
+                        <small style="color: #666;">默认密码为 123456，可自行修改</small>
+                    </div>
+                    <div class="info-note" style="margin: 1rem 0;">
+                        管理员重置密码后，用户将使用新密码登录。
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">重置密码</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideAdminResetModal()">取消</button>
+                    </div>
+                </form>
+                <div id="adminResetMessage" class="message" style="margin-top: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="page-footer">
+        <div class="footer-content">
+            <p>最后更新日期: <span id="lastUpdate"></span></p>
+            <p>卢丽婷 · 课题组管理员</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

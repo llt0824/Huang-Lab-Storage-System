@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抗体台账 - 黄永业课题组</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .antibody-table th {
+            background-color: #f0f7ff;
+        }
+        .required::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+        .storage-location {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="page-header">
+        <div class="header-content">
+            <h1>黄永业课题组</h1>
+            <p class="subtitle">抗体台账 - 网格化管理系统</p>
+        </div>
+        <div class="user-info">
+            <span id="currentUser">加载中...</span>
+            <button class="btn btn-sm" onclick="location.href='homepage.html'">返回主页</button>
+            <button class="btn btn-sm btn-logout" onclick="handleLogout()">退出</button>
+        </div>
+    </header>
+    
+    <nav class="page-nav">
+        <button class="nav-btn" onclick="location.href='primers.html'">🧬 引物</button>
+        <button class="nav-btn" onclick="location.href='plasmids.html'">🧫 质粒</button>
+        <button class="nav-btn" onclick="location.href='sirnas.html'">🔬 siRNA</button>
+        <button class="nav-btn active" onclick="location.href='antibodies.html'">💉 抗体</button>
+        <button class="nav-btn" onclick="location.href='reagents.html'">🧪 特殊试剂</button>
+    </nav>
+    
+    <main class="page-main">
+        <div class="action-bar">
+            <h2>💉 抗体台账列表</h2>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="showAntibodyUploadForm()">+ 上传新抗体</button>
+                <button class="btn btn-secondary" onclick="exportAntibodyTable()">📥 导出Excel</button>
+            </div>
+        </div>
+        
+        <div class="search-bar">
+            <input type="text" id="search-antibody" class="search-input" placeholder="搜索抗体名称、公司、货号、用途..." onkeyup="searchAntibodyTable()">
+            <select id="filter-antibody" class="search-select" onchange="searchAntibodyTable()">
+                <option value="all">全部抗体</option>
+                <option value="primary">一抗</option>
+                <option value="secondary">二抗</option>
+                <option value="other">其它</option>
+                <option value="mine">我添加的</option>
+            </select>
+        </div>
+        
+        <div class="table-container">
+            <table class="data-table antibody-table" id="antibody-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>名称</th>
+                        <th>公司</th>
+                        <th>货号</th>
+                        <th>种属</th>
+                        <th>类型</th>
+                        <th>用途</th>
+                        <th>储存位置</th>
+                        <th>到货日期</th>
+                        <th>备注</th>
+                        <th>添加人</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="antibody-tbody">
+                    <!-- JavaScript动态加载 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination" id="antibody-pagination"></div>
+    </main>
+    
+    <!-- 上传表单弹窗 -->
+    <div id="antibodyUploadModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>上传新抗体</h3>
+                <span class="close" onclick="hideAntibodyUploadForm()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="antibodyUploadForm" onsubmit="return handleAntibodyUpload(event)">
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">抗体名称</span></label>
+                            <input type="text" id="antibody-name" class="form-input" required placeholder="例如: GAPDH Rabbit mAb">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">公司</span></label>
+                            <input type="text" id="antibody-company" class="form-input" required placeholder="例如: CST/Abcam/Proteintech">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">货号</span></label>
+                            <input type="text" id="antibody-catalog" class="form-input" required placeholder="例如: #5174">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">种属</span></label>
+                            <input type="text" id="antibody-species" class="form-input" required placeholder="例如: Rabbit/Mouse/Goat">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><span class="required">抗体类型</span></label>
+                        <select id="antibody-type" class="form-input" required>
+                            <option value="">请选择类型</option>
+                            <option value="一抗">一抗</option>
+                            <option value="二抗">二抗</option>
+                            <option value="其它">其它</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><span class="required">用途</span></label>
+                        <textarea id="antibody-usage" class="form-input" required rows="2" placeholder="例如: Western Blot (1:1000), IF (1:200)"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label><span class="required">储存位置</span></label>
+                            <input type="text" id="antibody-location" class="form-input" required placeholder="例如: A盒-01">
+                        </div>
+                        <div class="form-group half">
+                            <label><span class="required">到货日期</span></label>
+                            <input type="date" id="antibody-date" class="form-input" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>备注（可选）</label>
+                        <textarea id="antibody-notes" class="form-input" rows="2" placeholder="例如: 分装保存，避免反复冻融"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">提交</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideAntibodyUploadForm()">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 详情查看弹窗 -->
+    <div id="detailModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>抗体详细信息</h3>
+                <span class="close" onclick="hideDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="antibodyDetailContent"></div>
+        </div>
+    </div>
+    
+    <footer class="page-footer">
+        <div class="footer-content">
+            <p>最后更新日期: <span id="lastUpdate"></span></p>
+            <p>卢丽婷 · 课题组管理员</p>
+        </div>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>
