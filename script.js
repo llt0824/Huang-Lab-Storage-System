@@ -1,3 +1,8 @@
+// ==================== API 配置 ====================
+const API_BASE = 'https://huanglabstoragesystem.xyz/api';  // 你的域名
+// 如果自定义域名HTTPS还没生效，可以用Vercel域名
+// const API_BASE = 'https://huang-lab-storage-system.vercel.app/api';
+
 // ==================== 全局变量和配置 ====================
 const STORAGE_KEYS = {
     USERS: 'lab_users',
@@ -9,213 +14,22 @@ const STORAGE_KEYS = {
     CURRENT_USER: 'current_user'
 };
 
-// ==================== 初始化数据库 ====================
-function initDatabase() {
-    // 初始化用户
-    if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-        const defaultUsers = [
-            { 
-                id: 1,
-                username: 'luliting', 
-                password: '123456', 
-                name: '卢丽婷',
-                email: 'luliting0824@163.com',
-                role: 'admin',
-                registerDate: '2026-01-01'
-            },
-            { 
-                id: 2,
-                username: 'wangxiaoming', 
-                password: '123456', 
-                name: '王小明',
-                email: 'wangxm@lab.com',
-                role: 'user',
-                registerDate: '2026-02-15'
-            }
-        ];
-        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(defaultUsers));
-    }
+// ==================== 初始化数据库（只初始化一次）====================
+async function initDatabase() {
+    // 检查是否已经初始化过
+    const initialized = localStorage.getItem('db_initialized');
+    if (initialized) return;
     
-    // 初始化引物数据 - 增加储存位置和备注
-    if (!localStorage.getItem(STORAGE_KEYS.PRIMERS)) {
-        const defaultPrimers = [
-            { 
-                id: 1, 
-                geneName: 'GAPDH',
-                species: 'Human',
-                usage: 'qPCR检测GAPDH内参基因表达',
-                fSeq: 'ATGGGGAAGGTGAAGGTCG',
-                rSeq: 'TAAAAGCAGCCCTGGTGACC',
-                source: 'PrimerBank',
-                company: '生工生物',
-                synthesizer: '卢丽婷',
-                synthesizerId: 1,
-                date: '2026-03-01',
-                location: '引物盒A-01',
-                notes: '浓度100μM，分装5管'
-            },
-            { 
-                id: 2, 
-                geneName: 'ACTB',
-                species: 'Human',
-                usage: 'qPCR检测β-actin内参基因',
-                fSeq: 'CATGTACGTTGCTATCCAGGC',
-                rSeq: 'CTCCTTAATGTCACGCACGAT',
-                source: 'PubMed文献',
-                company: '金斯瑞',
-                synthesizer: '王小明',
-                synthesizerId: 2,
-                date: '2026-03-05',
-                location: '引物盒A-02',
-                notes: '浓度100μM'
-            }
-        ];
-        localStorage.setItem(STORAGE_KEYS.PRIMERS, JSON.stringify(defaultPrimers));
+    try {
+        // 调用API初始化数据库表
+        const response = await fetch(`${API_BASE}/setup`);
+        if (response.ok) {
+            localStorage.setItem('db_initialized', 'true');
+            console.log('数据库初始化成功');
+        }
+    } catch (error) {
+        console.error('数据库初始化失败:', error);
     }
-    
-    // 初始化质粒数据 - 增加存放位置和备注
-    if (!localStorage.getItem(STORAGE_KEYS.PLASMIDS)) {
-        const defaultPlasmids = [
-            { 
-                id: 1, 
-                name: 'pET-28a(+)',
-                size: 5369,
-                resistance: 'Kanamycin',
-                feature: 'N-terminal His-Tag, T7lac promoter, 原核表达载体',
-                holder: '卢丽婷',
-                holderId: 1,
-                date: '2026-02-15',
-                addgene: '#12345',
-                location: '质粒A盒-01',
-                notes: '浓度500ng/μL，-20度保存'
-            },
-            { 
-                id: 2, 
-                name: 'pEGFP-N1',
-                size: 4733,
-                resistance: 'Kanamycin/Neomycin',
-                feature: 'EGFP融合蛋白表达, 哺乳动物表达载体',
-                holder: '王小明',
-                holderId: 2,
-                date: '2026-02-20',
-                addgene: '',
-                location: '质粒A盒-02',
-                notes: '浓度300ng/μL'
-            }
-        ];
-        localStorage.setItem(STORAGE_KEYS.PLASMIDS, JSON.stringify(defaultPlasmids));
-    }
-    
-    // 初始化siRNA数据 - 增加备注
-    if (!localStorage.getItem(STORAGE_KEYS.SIRNAS)) {
-        const defaultSIRNAs = [
-            { 
-                id: 1, 
-                geneName: 'GAPDH',
-                sense: 'GCAAAUUCCAUGGCACCGUTT',
-                antisense: 'ACGGUGCCAUGGAAUUUGCTT',
-                source: 'PubMed文献',
-                modification: '无修饰',
-                company: '吉玛基因',
-                synthesizer: '卢丽婷',
-                synthesizerId: 1,
-                date: '2026-02-28',
-                stock: 50.5,
-                notes: '分装5管，-80度保存'
-            },
-            { 
-                id: 2, 
-                geneName: 'TP53',
-                sense: 'GUACCACCAUCCACUACAATT',
-                antisense: 'UUGUAGUGGAUGGUGGUACTT',
-                source: '自己设计',
-                modification: '胆固醇修饰',
-                company: '锐博生物',
-                synthesizer: '王小明',
-                synthesizerId: 2,
-                date: '2026-03-03',
-                stock: 12.0,
-                notes: '避光保存'
-            }
-        ];
-        localStorage.setItem(STORAGE_KEYS.SIRNAS, JSON.stringify(defaultSIRNAs));
-    }
-    
-    // 初始化抗体数据 - 储存位置示例改为A盒xx号，增加备注
-    if (!localStorage.getItem(STORAGE_KEYS.ANTIBODIES)) {
-        const defaultAntibodies = [
-            {
-                id: 1,
-                name: 'GAPDH Rabbit mAb',
-                company: 'CST',
-                catalog: '#5174',
-                species: 'Rabbit',
-                type: '一抗',
-                usage: 'WB (1:1000), IF (1:200)',
-                location: 'A盒-01',
-                date: '2026-02-15',
-                notes: '分装保存，避免反复冻融',
-                uploader: '卢丽婷',
-                uploaderId: 1
-            },
-            {
-                id: 2,
-                name: 'Anti-mouse IgG HRP',
-                company: 'Abcam',
-                catalog: 'ab205719',
-                species: 'Goat',
-                type: '二抗',
-                usage: 'WB (1:5000)',
-                location: 'A盒-02',
-                date: '2026-03-01',
-                notes: '避光保存',
-                uploader: '王小明',
-                uploaderId: 2
-            }
-        ];
-        localStorage.setItem(STORAGE_KEYS.ANTIBODIES, JSON.stringify(defaultAntibodies));
-    }
-    
-    // 初始化特殊试剂数据
-    if (!localStorage.getItem(STORAGE_KEYS.REAGENTS)) {
-        const defaultReagents = [
-            {
-                id: 1,
-                name: 'Protease Inhibitor Cocktail',
-                usage: '蛋白提取时添加，抑制蛋白酶活性',
-                company: 'Roche',
-                catalog: '04693159001',
-                expiry: '2027-02-01',
-                date: '2026-02-01',
-                location: '-20度冰柜第二层',
-                notes: '分装成100ul每管，避免反复冻融',
-                uploader: '卢丽婷',
-                uploaderId: 1
-            },
-            {
-                id: 2,
-                name: 'Lipofectamine 3000',
-                usage: '细胞转染',
-                company: 'Thermo Fisher',
-                catalog: 'L3000015',
-                expiry: '2026-12-31',
-                date: '2026-03-05',
-                location: '4度冰箱门',
-                notes: '避光保存，不可冷冻',
-                uploader: '王小明',
-                uploaderId: 2
-            }
-        ];
-        localStorage.setItem(STORAGE_KEYS.REAGENTS, JSON.stringify(defaultReagents));
-    }
-    
-    // 设置最后更新日期
-    const today = new Date().toLocaleDateString('zh-CN', { 
-        year: 'numeric', 
-        month: '2-digit', 
-        day: '2-digit' 
-    }).replace(/\//g, '-');
-    sessionStorage.setItem('lastUpdate', today);
 }
 
 // 页面加载时初始化
@@ -245,42 +59,52 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ==================== 登录功能 ====================
-function handleLogin(event) {
+async function handleLogin(event) {
     event.preventDefault();
     
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const remember = document.getElementById('remember').checked;
     
-    const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || [];
-    const user = users.find(u => u.username === username && u.password === password);
-    
-    const messageDiv = document.getElementById('loginMessage');
-    
-    if (user) {
-        messageDiv.className = 'message success';
-        messageDiv.textContent = '登录成功，正在跳转...';
+    try {
+        const response = await fetch(`${API_BASE}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
         
-        const userSession = {
-            id: user.id,
-            username: user.username,
-            name: user.name || user.username,
-            email: user.email,
-            role: user.role
-        };
+        const data = await response.json();
+        const messageDiv = document.getElementById('loginMessage');
         
-        if (remember) {
-            localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(userSession));
+        if (data.success) {
+            messageDiv.className = 'message success';
+            messageDiv.textContent = '登录成功，正在跳转...';
+            
+            const userSession = {
+                id: data.user.id,
+                username: data.user.username,
+                name: data.user.name,
+                email: data.user.email,
+                role: data.user.role
+            };
+            
+            if (remember) {
+                localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(userSession));
+            } else {
+                sessionStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(userSession));
+            }
+            
+            setTimeout(() => {
+                window.location.href = 'homepage.html';
+            }, 1000);
         } else {
-            sessionStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(userSession));
+            messageDiv.className = 'message error';
+            messageDiv.textContent = data.message || '用户名或密码错误';
         }
-        
-        setTimeout(() => {
-            window.location.href = 'homepage.html';
-        }, 1000);
-    } else {
+    } catch (error) {
+        const messageDiv = document.getElementById('loginMessage');
         messageDiv.className = 'message error';
-        messageDiv.textContent = '用户名或密码错误';
+        messageDiv.textContent = '网络错误，请稍后重试';
     }
     
     return false;
@@ -393,24 +217,30 @@ function initHomepage() {
     displayUserList();
 }
 
-function updateCardCounts() {
-    const primers = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRIMERS)) || [];
-    const plasmids = JSON.parse(localStorage.getItem(STORAGE_KEYS.PLASMIDS)) || [];
-    const sirnas = JSON.parse(localStorage.getItem(STORAGE_KEYS.SIRNAS)) || [];
-    const antibodies = JSON.parse(localStorage.getItem(STORAGE_KEYS.ANTIBODIES)) || [];
-    const reagents = JSON.parse(localStorage.getItem(STORAGE_KEYS.REAGENTS)) || [];
-    
-    const primerCount = document.getElementById('primer-count');
-    const plasmidCount = document.getElementById('plasmid-count');
-    const sirnaCount = document.getElementById('sirna-count');
-    const antibodyCount = document.getElementById('antibody-count');
-    const reagentCount = document.getElementById('reagent-count');
-    
-    if (primerCount) primerCount.textContent = `📊 总数: ${primers.length}`;
-    if (plasmidCount) plasmidCount.textContent = `📊 总数: ${plasmids.length}`;
-    if (sirnaCount) sirnaCount.textContent = `📊 总数: ${sirnas.length}`;
-    if (antibodyCount) antibodyCount.textContent = `📊 总数: ${antibodies.length}`;
-    if (reagentCount) reagentCount.textContent = `📊 总数: ${reagents.length}`;
+async function updateCardCounts() {
+    try {
+        const [primers, plasmids, sirnas, antibodies, reagents] = await Promise.all([
+            fetch(`${API_BASE}/primers`).then(res => res.json()),
+            fetch(`${API_BASE}/plasmids`).then(res => res.json()),
+            fetch(`${API_BASE}/sirnas`).then(res => res.json()),
+            fetch(`${API_BASE}/antibodies`).then(res => res.json()),
+            fetch(`${API_BASE}/reagents`).then(res => res.json())
+        ]);
+        
+        const primerCount = document.getElementById('primer-count');
+        const plasmidCount = document.getElementById('plasmid-count');
+        const sirnaCount = document.getElementById('sirna-count');
+        const antibodyCount = document.getElementById('antibody-count');
+        const reagentCount = document.getElementById('reagent-count');
+        
+        if (primerCount) primerCount.textContent = `📊 总数: ${primers.length}`;
+        if (plasmidCount) plasmidCount.textContent = `📊 总数: ${plasmids.length}`;
+        if (sirnaCount) sirnaCount.textContent = `📊 总数: ${sirnas.length}`;
+        if (antibodyCount) antibodyCount.textContent = `📊 总数: ${antibodies.length}`;
+        if (reagentCount) reagentCount.textContent = `📊 总数: ${reagents.length}`;
+    } catch (error) {
+        console.error('更新计数失败:', error);
+    }
 }
 
 // ==================== 显示用户名单 ====================
@@ -539,52 +369,59 @@ function initPrimersPage() {
     loadPrimers();
 }
 
-function loadPrimers(page = 1) {
+async function loadPrimers(page = 1) {
     const tbody = document.getElementById('primer-tbody');
     if (!tbody) return;
     
-    const primers = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRIMERS)) || [];
-    const user = getCurrentUser();
-    const admin = isAdmin();
-    
-    primers.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    const pageSize = 10;
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const pageData = primers.slice(start, end);
-    
-    tbody.innerHTML = '';
-    
-    pageData.forEach(primer => {
-        const row = document.createElement('tr');
-        row.setAttribute('onclick', `showPrimerDetail(${primer.id})`);
+    try {
+        const response = await fetch(`${API_BASE}/primers`);
+        const primers = await response.json();
         
-        const canDelete = admin || (primer.synthesizer === user?.name);
+        const user = getCurrentUser();
+        const admin = isAdmin();
         
-        row.innerHTML = `
-            <td>${primer.id}</td>
-            <td><strong>${primer.geneName}</strong></td>
-            <td>${primer.species}</td>
-            <td>${primer.usage}</td>
-            <td class="sequence">${primer.fSeq}</td>
-            <td class="sequence">${primer.rSeq}</td>
-            <td>${primer.source}</td>
-            <td>${primer.company}</td>
-            <td>${primer.synthesizer}</td>
-            <td>${primer.date}</td>
-            <td class="storage-location">${primer.location || '-'}</td>
-            <td>${primer.notes || '-'}</td>
-            <td>
-                ${canDelete ? 
-                    `<a href="#" class="action-link delete" onclick="event.stopPropagation(); deletePrimer(${primer.id})">删除</a>` : 
-                    '<span style="color:#999;">只读</span>'}
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-    
-    generatePagination('primer', primers.length, page, pageSize);
+        primers.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        const pageSize = 10;
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+        const pageData = primers.slice(start, end);
+        
+        tbody.innerHTML = '';
+        
+        pageData.forEach(primer => {
+            const row = document.createElement('tr');
+            row.setAttribute('onclick', `showPrimerDetail(${primer.id})`);
+            
+            const canDelete = admin || (primer.synthesizer === user?.name);
+            
+            row.innerHTML = `
+                <td>${primer.id}</td>
+                <td><strong>${primer.gene_name}</strong></td>
+                <td>${primer.species}</td>
+                <td>${primer.usage}</td>
+                <td class="sequence">${primer.f_seq}</td>
+                <td class="sequence">${primer.r_seq}</td>
+                <td>${primer.source}</td>
+                <td>${primer.company}</td>
+                <td>${primer.synthesizer}</td>
+                <td>${primer.date}</td>
+                <td class="storage-location">${primer.location || '-'}</td>
+                <td>${primer.notes || '-'}</td>
+                <td>
+                    ${canDelete ? 
+                        `<a href="#" class="action-link delete" onclick="event.stopPropagation(); deletePrimer(${primer.id})">删除</a>` : 
+                        '<span style="color:#999;">只读</span>'}
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        generatePagination('primer', primers.length, page, pageSize);
+    } catch (error) {
+        console.error('加载引物失败:', error);
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; color: red;">加载失败，请刷新重试</td></tr>';
+    }
 }
 
 function showPrimerUploadForm() {
@@ -606,7 +443,7 @@ function hidePrimerUploadForm() {
     }
 }
 
-function handlePrimerUpload(event) {
+async function handlePrimerUpload(event) {
     event.preventDefault();
     
     const user = getCurrentUser();
@@ -617,62 +454,71 @@ function handlePrimerUpload(event) {
     
     const primerData = {
         id: Date.now(),
-        geneName: document.getElementById('primer-gene').value.trim(),
+        gene_name: document.getElementById('primer-gene').value.trim(),
         species: document.getElementById('primer-species').value.trim(),
         usage: document.getElementById('primer-usage').value.trim(),
-        fSeq: document.getElementById('primer-f-seq').value.trim(),
-        rSeq: document.getElementById('primer-r-seq').value.trim(),
+        f_seq: document.getElementById('primer-f-seq').value.trim(),
+        r_seq: document.getElementById('primer-r-seq').value.trim(),
         source: document.getElementById('primer-source').value,
         company: document.getElementById('primer-company').value.trim(),
         synthesizer: user.name,
-        synthesizerId: user.id,
+        synthesizer_id: user.id,
         date: document.getElementById('primer-date').value,
         location: document.getElementById('primer-location').value.trim(),
         notes: document.getElementById('primer-notes').value.trim()
     };
     
-    if (!primerData.geneName || !primerData.species || !primerData.usage || 
-        !primerData.fSeq || !primerData.rSeq || !primerData.source || 
+    if (!primerData.gene_name || !primerData.species || !primerData.usage || 
+        !primerData.f_seq || !primerData.r_seq || !primerData.source || 
         !primerData.company || !primerData.synthesizer || !primerData.date || !primerData.location) {
         alert('请填写所有必填项（带*的字段）');
         return false;
     }
     
-    const primers = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRIMERS)) || [];
-    primers.push(primerData);
-    localStorage.setItem(STORAGE_KEYS.PRIMERS, JSON.stringify(primers));
-    
-    sessionStorage.setItem('lastUpdate', new Date().toLocaleDateString('zh-CN'));
-    
-    alert('上传成功！');
-    hidePrimerUploadForm();
-    loadPrimers();
+    try {
+        const response = await fetch(`${API_BASE}/primers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(primerData)
+        });
+        
+        if (response.ok) {
+            alert('上传成功！');
+            hidePrimerUploadForm();
+            loadPrimers();
+        } else {
+            alert('上传失败，请重试');
+        }
+    } catch (error) {
+        alert('网络错误，请稍后重试');
+    }
     
     return false;
 }
 
-function deletePrimer(id) {
+async function deletePrimer(id) {
     if (!confirm('确定要删除这条引物记录吗？')) return;
     
     const user = getCurrentUser();
-    const primers = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRIMERS)) || [];
-    const primer = primers.find(p => p.id === id);
     
-    if (!isAdmin() && primer.synthesizer !== user?.name) {
-        alert('只有管理员可以删除他人的记录');
-        return;
+    try {
+        const response = await fetch(`${API_BASE}/primers?id=${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            alert('删除成功');
+            loadPrimers();
+        } else {
+            alert('删除失败');
+        }
+    } catch (error) {
+        alert('网络错误，请稍后重试');
     }
-    
-    const newPrimers = primers.filter(p => p.id !== id);
-    localStorage.setItem(STORAGE_KEYS.PRIMERS, JSON.stringify(newPrimers));
-    
-    sessionStorage.setItem('lastUpdate', new Date().toLocaleDateString('zh-CN'));
-    
-    alert('删除成功');
-    loadPrimers();
 }
 
 function showPrimerDetail(id) {
+    // 暂时从localStorage获取详情，后续可以改为API调用
     const primers = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRIMERS)) || [];
     const primer = primers.find(p => p.id === id);
     
@@ -682,11 +528,11 @@ function showPrimerDetail(id) {
     if (!detailContent) return;
     
     detailContent.innerHTML = `
-        <div class="detail-item"><span class="detail-label">基因名称：</span><span class="detail-value">${primer.geneName}</span></div>
+        <div class="detail-item"><span class="detail-label">基因名称：</span><span class="detail-value">${primer.gene_name}</span></div>
         <div class="detail-item"><span class="detail-label">物种：</span><span class="detail-value">${primer.species}</span></div>
         <div class="detail-item"><span class="detail-label">用途：</span><span class="detail-value">${primer.usage}</span></div>
-        <div class="detail-item"><span class="detail-label">F序列 (5'→3')：</span><span class="detail-value" style="font-family: monospace;">${primer.fSeq}</span></div>
-        <div class="detail-item"><span class="detail-label">R序列 (5'→3')：</span><span class="detail-value" style="font-family: monospace;">${primer.rSeq}</span></div>
+        <div class="detail-item"><span class="detail-label">F序列 (5'→3')：</span><span class="detail-value" style="font-family: monospace;">${primer.f_seq}</span></div>
+        <div class="detail-item"><span class="detail-label">R序列 (5'→3')：</span><span class="detail-value" style="font-family: monospace;">${primer.r_seq}</span></div>
         <div class="detail-item"><span class="detail-label">序列来源：</span><span class="detail-value">${primer.source}</span></div>
         <div class="detail-item"><span class="detail-label">合成公司：</span><span class="detail-value">${primer.company}</span></div>
         <div class="detail-item"><span class="detail-label">合成人：</span><span class="detail-value">${primer.synthesizer}</span></div>
@@ -698,7 +544,7 @@ function showPrimerDetail(id) {
     document.getElementById('detailModal').style.display = 'flex';
 }
 
-function searchPrimerTable() {
+async function searchPrimerTable() {
     const searchInput = document.getElementById('search-primer');
     const filterSelect = document.getElementById('filter-primer');
     
@@ -708,1026 +554,58 @@ function searchPrimerTable() {
     const filterValue = filterSelect ? filterSelect.value : 'all';
     const user = getCurrentUser();
     
-    let data = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRIMERS)) || [];
-    
-    if (filterValue === 'mine') {
-        data = data.filter(item => item.synthesizer === user?.name);
-    } else if (filterValue === 'recent') {
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        data = data.filter(item => new Date(item.date) >= thirtyDaysAgo);
+    try {
+        const response = await fetch(`${API_BASE}/primers`);
+        let data = await response.json();
+        
+        if (filterValue === 'mine') {
+            data = data.filter(item => item.synthesizer === user?.name);
+        } else if (filterValue === 'recent') {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            data = data.filter(item => new Date(item.date) >= thirtyDaysAgo);
+        }
+        
+        if (searchTerm) {
+            data = data.filter(item => 
+                item.gene_name.toLowerCase().includes(searchTerm) ||
+                item.usage.toLowerCase().includes(searchTerm) ||
+                item.f_seq.toLowerCase().includes(searchTerm) ||
+                item.r_seq.toLowerCase().includes(searchTerm) ||
+                item.company.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        const tbody = document.getElementById('primer-tbody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        data.slice(0, 10).forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.id}</td>
+                <td><strong>${item.gene_name}</strong></td>
+                <td>${item.species}</td>
+                <td>${item.usage}</td>
+                <td class="sequence">${item.f_seq}</td>
+                <td class="sequence">${item.r_seq}</td>
+                <td>${item.source}</td>
+                <td>${item.company}</td>
+                <td>${item.synthesizer}</td>
+                <td>${item.date}</td>
+                <td>${item.location || '-'}</td>
+                <td>${item.notes || '-'}</td>
+                <td>${item.synthesizer === user?.name ? '可删除' : '只读'}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('搜索失败:', error);
     }
-    
-    if (searchTerm) {
-        data = data.filter(item => 
-            item.geneName.toLowerCase().includes(searchTerm) ||
-            item.usage.toLowerCase().includes(searchTerm) ||
-            item.fSeq.toLowerCase().includes(searchTerm) ||
-            item.rSeq.toLowerCase().includes(searchTerm) ||
-            item.company.toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    const tbody = document.getElementById('primer-tbody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    data.slice(0, 10).forEach(item => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${item.id}</td>
-            <td><strong>${item.geneName}</strong></td>
-            <td>${item.species}</td>
-            <td>${item.usage}</td>
-            <td class="sequence">${item.fSeq}</td>
-            <td class="sequence">${item.rSeq}</td>
-            <td>${item.source}</td>
-            <td>${item.company}</td>
-            <td>${item.synthesizer}</td>
-            <td>${item.date}</td>
-            <td>${item.location || '-'}</td>
-            <td>${item.notes || '-'}</td>
-            <td>${item.synthesizer === user?.name ? '可删除' : '只读'}</td>
-        `;
-        tbody.appendChild(row);
-    });
 }
 
 function exportPrimerTable() {
-    let data = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRIMERS)) || [];
-    
-    let csv = 'ID,基因名称,物种,用途,F序列,R序列,序列来源,合成公司,合成人,合成时间,储存位置,备注\n';
-    data.forEach(item => {
-        csv += `${item.id},${item.geneName},${item.species},${item.usage},${item.fSeq},${item.rSeq},${item.source},${item.company},${item.synthesizer},${item.date},${item.location || ''},${item.notes || ''}\n`;
-    });
-    
-    downloadCSV(csv, `引物台账_${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-// ==================== 质粒页面函数 ====================
-function initPlasmidsPage() {
-    const user = checkLogin();
-    if (!user) return;
-    
-    const userSpan = document.getElementById('currentUser');
-    if (userSpan) userSpan.textContent = `👤 ${user.name}`;
-    
-    const lastUpdateSpan = document.getElementById('lastUpdate');
-    if (lastUpdateSpan) {
-        lastUpdateSpan.textContent = sessionStorage.getItem('lastUpdate') || new Date().toLocaleDateString('zh-CN');
-    }
-    
-    loadPlasmids();
-}
-
-function loadPlasmids(page = 1) {
-    const tbody = document.getElementById('plasmid-tbody');
-    if (!tbody) return;
-    
-    const plasmids = JSON.parse(localStorage.getItem(STORAGE_KEYS.PLASMIDS)) || [];
-    const user = getCurrentUser();
-    const admin = isAdmin();
-    
-    plasmids.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    const pageSize = 10;
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const pageData = plasmids.slice(start, end);
-    
-    tbody.innerHTML = '';
-    
-    pageData.forEach(plasmid => {
-        const row = document.createElement('tr');
-        row.setAttribute('onclick', `showPlasmidDetail(${plasmid.id})`);
-        
-        const canDelete = admin || (plasmid.holder === user?.name);
-        
-        row.innerHTML = `
-            <td>${plasmid.id}</td>
-            <td><strong>${plasmid.name}</strong></td>
-            <td>${plasmid.size}</td>
-            <td>${plasmid.resistance}</td>
-            <td>${plasmid.feature}</td>
-            <td>${plasmid.holder}</td>
-            <td>${plasmid.date}</td>
-            <td>${plasmid.addgene || '-'}</td>
-            <td class="storage-location">${plasmid.location || '-'}</td>
-            <td>${plasmid.notes || '-'}</td>
-            <td>
-                ${canDelete ? 
-                    `<a href="#" class="action-link delete" onclick="event.stopPropagation(); deletePlasmid(${plasmid.id})">删除</a>` : 
-                    '<span style="color:#999;">只读</span>'}
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-    
-    generatePagination('plasmid', plasmids.length, page, pageSize);
-}
-
-function showPlasmidUploadForm() {
-    const modal = document.getElementById('plasmidUploadModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        const today = new Date().toISOString().split('T')[0];
-        const dateInput = document.getElementById('plasmid-date');
-        if (dateInput) dateInput.value = today;
-    }
-}
-
-function hidePlasmidUploadForm() {
-    const modal = document.getElementById('plasmidUploadModal');
-    if (modal) {
-        modal.style.display = 'none';
-        const form = document.getElementById('plasmidUploadForm');
-        if (form) form.reset();
-    }
-}
-
-function handlePlasmidUpload(event) {
-    event.preventDefault();
-    
-    const user = getCurrentUser();
-    if (!user) {
-        alert('请先登录');
-        return false;
-    }
-    
-    const plasmidData = {
-        id: Date.now(),
-        name: document.getElementById('plasmid-name').value.trim(),
-        size: document.getElementById('plasmid-size').value,
-        resistance: document.getElementById('plasmid-resistance').value.trim(),
-        feature: document.getElementById('plasmid-feature').value.trim(),
-        holder: user.name,
-        holderId: user.id,
-        date: document.getElementById('plasmid-date').value,
-        addgene: document.getElementById('plasmid-addgene').value.trim(),
-        location: document.getElementById('plasmid-location').value.trim(),
-        notes: document.getElementById('plasmid-notes').value.trim()
-    };
-    
-    if (!plasmidData.name || !plasmidData.size || !plasmidData.resistance || 
-        !plasmidData.feature || !plasmidData.holder || !plasmidData.date || !plasmidData.location) {
-        alert('请填写所有必填项（带*的字段）');
-        return false;
-    }
-    
-    const plasmids = JSON.parse(localStorage.getItem(STORAGE_KEYS.PLASMIDS)) || [];
-    plasmids.push(plasmidData);
-    localStorage.setItem(STORAGE_KEYS.PLASMIDS, JSON.stringify(plasmids));
-    
-    sessionStorage.setItem('lastUpdate', new Date().toLocaleDateString('zh-CN'));
-    
-    alert('上传成功！');
-    hidePlasmidUploadForm();
-    loadPlasmids();
-    
-    return false;
-}
-
-function deletePlasmid(id) {
-    if (!confirm('确定要删除这条质粒记录吗？')) return;
-    
-    const user = getCurrentUser();
-    const plasmids = JSON.parse(localStorage.getItem(STORAGE_KEYS.PLASMIDS)) || [];
-    const plasmid = plasmids.find(p => p.id === id);
-    
-    if (!isAdmin() && plasmid.holder !== user?.name) {
-        alert('只有管理员可以删除他人的记录');
-        return;
-    }
-    
-    const newPlasmids = plasmids.filter(p => p.id !== id);
-    localStorage.setItem(STORAGE_KEYS.PLASMIDS, JSON.stringify(newPlasmids));
-    
-    sessionStorage.setItem('lastUpdate', new Date().toLocaleDateString('zh-CN'));
-    
-    alert('删除成功');
-    loadPlasmids();
-}
-
-function showPlasmidDetail(id) {
-    const plasmids = JSON.parse(localStorage.getItem(STORAGE_KEYS.PLASMIDS)) || [];
-    const plasmid = plasmids.find(p => p.id === id);
-    
-    if (!plasmid) return;
-    
-    const detailContent = document.getElementById('plasmidDetailContent');
-    if (!detailContent) return;
-    
-    detailContent.innerHTML = `
-        <div class="detail-item"><span class="detail-label">质粒名称：</span><span class="detail-value">${plasmid.name}</span></div>
-        <div class="detail-item"><span class="detail-label">大小：</span><span class="detail-value">${plasmid.size} bp</span></div>
-        <div class="detail-item"><span class="detail-label">抗性：</span><span class="detail-value">${plasmid.resistance}</span></div>
-        <div class="detail-item"><span class="detail-label">特征与用途：</span><span class="detail-value">${plasmid.feature}</span></div>
-        <div class="detail-item"><span class="detail-label">持有人：</span><span class="detail-value">${plasmid.holder}</span></div>
-        <div class="detail-item"><span class="detail-label">上传日期：</span><span class="detail-value">${plasmid.date}</span></div>
-        <div class="detail-item"><span class="detail-label">Addgene序号：</span><span class="detail-value">${plasmid.addgene || '无'}</span></div>
-        <div class="detail-item"><span class="detail-label">存放位置：</span><span class="detail-value">${plasmid.location || '-'}</span></div>
-        <div class="detail-item"><span class="detail-label">备注：</span><span class="detail-value">${plasmid.notes || '-'}</span></div>
-    `;
-    
-    document.getElementById('detailModal').style.display = 'flex';
-}
-
-function searchPlasmidTable() {
-    const searchInput = document.getElementById('search-plasmid');
-    const filterSelect = document.getElementById('filter-plasmid');
-    
-    if (!searchInput) return;
-    
-    const searchTerm = searchInput.value.toLowerCase();
-    const filterValue = filterSelect ? filterSelect.value : 'all';
-    const user = getCurrentUser();
-    
-    let data = JSON.parse(localStorage.getItem(STORAGE_KEYS.PLASMIDS)) || [];
-    
-    if (filterValue === 'mine') {
-        data = data.filter(item => item.holder === user?.name);
-    } else if (filterValue === 'recent') {
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        data = data.filter(item => new Date(item.date) >= thirtyDaysAgo);
-    }
-    
-    if (searchTerm) {
-        data = data.filter(item => 
-            item.name.toLowerCase().includes(searchTerm) ||
-            item.feature.toLowerCase().includes(searchTerm) ||
-            item.resistance.toLowerCase().includes(searchTerm) ||
-            (item.addgene && item.addgene.toLowerCase().includes(searchTerm))
-        );
-    }
-    
-    const tbody = document.getElementById('plasmid-tbody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    data.slice(0, 10).forEach(item => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${item.id}</td>
-            <td><strong>${item.name}</strong></td>
-            <td>${item.size}</td>
-            <td>${item.resistance}</td>
-            <td>${item.feature}</td>
-            <td>${item.holder}</td>
-            <td>${item.date}</td>
-            <td>${item.addgene || '-'}</td>
-            <td>${item.location || '-'}</td>
-            <td>${item.notes || '-'}</td>
-            <td>${item.holder === user?.name ? '可删除' : '只读'}</td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-function exportPlasmidTable() {
-    let data = JSON.parse(localStorage.getItem(STORAGE_KEYS.PLASMIDS)) || [];
-    
-    let csv = 'ID,质粒名称,大小(bp),抗性,特征与用途,持有人,上传日期,Addgene序号,存放位置,备注\n';
-    data.forEach(item => {
-        csv += `${item.id},${item.name},${item.size},${item.resistance},${item.feature},${item.holder},${item.date},${item.addgene || ''},${item.location || ''},${item.notes || ''}\n`;
-    });
-    
-    downloadCSV(csv, `质粒台账_${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-// ==================== siRNA页面函数 ====================
-function initSIRNAsPage() {
-    const user = checkLogin();
-    if (!user) return;
-    
-    const userSpan = document.getElementById('currentUser');
-    if (userSpan) userSpan.textContent = `👤 ${user.name}`;
-    
-    const lastUpdateSpan = document.getElementById('lastUpdate');
-    if (lastUpdateSpan) {
-        lastUpdateSpan.textContent = sessionStorage.getItem('lastUpdate') || new Date().toLocaleDateString('zh-CN');
-    }
-    
-    loadSIRNAs();
-}
-
-function loadSIRNAs(page = 1) {
-    const tbody = document.getElementById('sirna-tbody');
-    if (!tbody) return;
-    
-    const sirnas = JSON.parse(localStorage.getItem(STORAGE_KEYS.SIRNAS)) || [];
-    const user = getCurrentUser();
-    const admin = isAdmin();
-    
-    sirnas.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    const pageSize = 10;
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const pageData = sirnas.slice(start, end);
-    
-    tbody.innerHTML = '';
-    
-    pageData.forEach(sirna => {
-        const row = document.createElement('tr');
-        row.setAttribute('onclick', `showSirnaDetail(${sirna.id})`);
-        
-        const stockClass = sirna.stock < 10 ? 'stock-low' : '';
-        const canDelete = admin || (sirna.synthesizer === user?.name);
-        
-        row.innerHTML = `
-            <td>${sirna.id}</td>
-            <td><strong>${sirna.geneName}</strong></td>
-            <td class="sequence">${sirna.sense}</td>
-            <td class="sequence">${sirna.antisense}</td>
-            <td>${sirna.source}</td>
-            <td>${sirna.modification}</td>
-            <td>${sirna.company}</td>
-            <td>${sirna.synthesizer}</td>
-            <td>${sirna.date}</td>
-            <td class="${stockClass}">${sirna.stock} nmol</td>
-            <td>${sirna.notes || '-'}</td>
-            <td>
-                ${canDelete ? 
-                    `<a href="#" class="action-link delete" onclick="event.stopPropagation(); deleteSirna(${sirna.id})">删除</a>` : 
-                    '<span style="color:#999;">只读</span>'}
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-    
-    generatePagination('sirna', sirnas.length, page, pageSize);
-}
-
-function showSirnaUploadForm() {
-    const modal = document.getElementById('sirnaUploadModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        const today = new Date().toISOString().split('T')[0];
-        const dateInput = document.getElementById('sirna-date');
-        if (dateInput) dateInput.value = today;
-    }
-}
-
-function hideSirnaUploadForm() {
-    const modal = document.getElementById('sirnaUploadModal');
-    if (modal) {
-        modal.style.display = 'none';
-        const form = document.getElementById('sirnaUploadForm');
-        if (form) form.reset();
-    }
-}
-
-function handleSirnaUpload(event) {
-    event.preventDefault();
-    
-    const user = getCurrentUser();
-    if (!user) {
-        alert('请先登录');
-        return false;
-    }
-    
-    const modification = document.querySelector('input[name="sirna-modified"]:checked')?.value || '无修饰';
-    
-    const sirnaData = {
-        id: Date.now(),
-        geneName: document.getElementById('sirna-gene').value.trim(),
-        sense: document.getElementById('sirna-sense').value.trim(),
-        antisense: document.getElementById('sirna-antisense').value.trim(),
-        source: document.getElementById('sirna-source').value,
-        modification: modification,
-        company: document.getElementById('sirna-company').value.trim(),
-        synthesizer: user.name,
-        synthesizerId: user.id,
-        date: document.getElementById('sirna-date').value,
-        stock: parseFloat(document.getElementById('sirna-stock').value) || 0,
-        notes: document.getElementById('sirna-notes').value.trim()
-    };
-    
-    if (!sirnaData.geneName || !sirnaData.sense || !sirnaData.antisense || 
-        !sirnaData.source || !sirnaData.company || !sirnaData.synthesizer || 
-        !sirnaData.date || !sirnaData.stock) {
-        alert('请填写所有必填项（带*的字段）');
-        return false;
-    }
-    
-    const sirnas = JSON.parse(localStorage.getItem(STORAGE_KEYS.SIRNAS)) || [];
-    sirnas.push(sirnaData);
-    localStorage.setItem(STORAGE_KEYS.SIRNAS, JSON.stringify(sirnas));
-    
-    sessionStorage.setItem('lastUpdate', new Date().toLocaleDateString('zh-CN'));
-    
-    alert('上传成功！');
-    hideSirnaUploadForm();
-    loadSIRNAs();
-    
-    return false;
-}
-
-function deleteSirna(id) {
-    if (!confirm('确定要删除这条siRNA记录吗？')) return;
-    
-    const user = getCurrentUser();
-    const sirnas = JSON.parse(localStorage.getItem(STORAGE_KEYS.SIRNAS)) || [];
-    const sirna = sirnas.find(s => s.id === id);
-    
-    if (!isAdmin() && sirna.synthesizer !== user?.name) {
-        alert('只有管理员可以删除他人的记录');
-        return;
-    }
-    
-    const newSirnas = sirnas.filter(s => s.id !== id);
-    localStorage.setItem(STORAGE_KEYS.SIRNAS, JSON.stringify(newSirnas));
-    
-    sessionStorage.setItem('lastUpdate', new Date().toLocaleDateString('zh-CN'));
-    
-    alert('删除成功');
-    loadSIRNAs();
-}
-
-function showSirnaDetail(id) {
-    const sirnas = JSON.parse(localStorage.getItem(STORAGE_KEYS.SIRNAS)) || [];
-    const sirna = sirnas.find(s => s.id === id);
-    
-    if (!sirna) return;
-    
-    const detailContent = document.getElementById('sirnaDetailContent');
-    if (!detailContent) return;
-    
-    detailContent.innerHTML = `
-        <div class="detail-item"><span class="detail-label">基因名：</span><span class="detail-value">${sirna.geneName}</span></div>
-        <div class="detail-item"><span class="detail-label">正义链：</span><span class="detail-value" style="font-family: monospace;">${sirna.sense}</span></div>
-        <div class="detail-item"><span class="detail-label">反义链：</span><span class="detail-value" style="font-family: monospace;">${sirna.antisense}</span></div>
-        <div class="detail-item"><span class="detail-label">序列来源：</span><span class="detail-value">${sirna.source}</span></div>
-        <div class="detail-item"><span class="detail-label">修饰：</span><span class="detail-value">${sirna.modification}</span></div>
-        <div class="detail-item"><span class="detail-label">合成公司：</span><span class="detail-value">${sirna.company}</span></div>
-        <div class="detail-item"><span class="detail-label">合成人：</span><span class="detail-value">${sirna.synthesizer}</span></div>
-        <div class="detail-item"><span class="detail-label">合成日期：</span><span class="detail-value">${sirna.date}</span></div>
-        <div class="detail-item"><span class="detail-label">剩余储量：</span><span class="detail-value">${sirna.stock} nmol</span></div>
-        <div class="detail-item"><span class="detail-label">备注：</span><span class="detail-value">${sirna.notes || '-'}</span></div>
-    `;
-    
-    document.getElementById('detailModal').style.display = 'flex';
-}
-
-function searchSirnaTable() {
-    const searchInput = document.getElementById('search-sirna');
-    const filterSelect = document.getElementById('filter-sirna');
-    
-    if (!searchInput) return;
-    
-    const searchTerm = searchInput.value.toLowerCase();
-    const filterValue = filterSelect ? filterSelect.value : 'all';
-    const user = getCurrentUser();
-    
-    let data = JSON.parse(localStorage.getItem(STORAGE_KEYS.SIRNAS)) || [];
-    
-    if (filterValue === 'mine') {
-        data = data.filter(item => item.synthesizer === user?.name);
-    } else if (filterValue === 'low-stock') {
-        data = data.filter(item => item.stock < 10);
-    } else if (filterValue === 'modified') {
-        data = data.filter(item => item.modification !== '无修饰');
-    }
-    
-    if (searchTerm) {
-        data = data.filter(item => 
-            item.geneName.toLowerCase().includes(searchTerm) ||
-            item.source.toLowerCase().includes(searchTerm) ||
-            item.company.toLowerCase().includes(searchTerm) ||
-            item.sense.toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    const tbody = document.getElementById('sirna-tbody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    data.slice(0, 10).forEach(item => {
-        const row = document.createElement('tr');
-        const stockClass = item.stock < 10 ? 'stock-low' : '';
-        row.innerHTML = `
-            <td>${item.id}</td>
-            <td><strong>${item.geneName}</strong></td>
-            <td class="sequence">${item.sense}</td>
-            <td class="sequence">${item.antisense}</td>
-            <td>${item.source}</td>
-            <td>${item.modification}</td>
-            <td>${item.company}</td>
-            <td>${item.synthesizer}</td>
-            <td>${item.date}</td>
-            <td class="${stockClass}">${item.stock} nmol</td>
-            <td>${item.notes || '-'}</td>
-            <td>${item.synthesizer === user?.name ? '可删除' : '只读'}</td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-function exportSirnaTable() {
-    let data = JSON.parse(localStorage.getItem(STORAGE_KEYS.SIRNAS)) || [];
-    
-    let csv = 'ID,基因名,正义链,反义链,序列来源,修饰,合成公司,合成人,合成日期,剩余储量(nmol),备注\n';
-    data.forEach(item => {
-        csv += `${item.id},${item.geneName},${item.sense},${item.antisense},${item.source},${item.modification},${item.company},${item.synthesizer},${item.date},${item.stock},${item.notes || ''}\n`;
-    });
-    
-    downloadCSV(csv, `siRNA台账_${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-// ==================== 抗体页面函数 ====================
-function initAntibodiesPage() {
-    const user = checkLogin();
-    if (!user) return;
-    
-    const userSpan = document.getElementById('currentUser');
-    if (userSpan) userSpan.textContent = `👤 ${user.name}`;
-    
-    const lastUpdateSpan = document.getElementById('lastUpdate');
-    if (lastUpdateSpan) {
-        lastUpdateSpan.textContent = sessionStorage.getItem('lastUpdate') || new Date().toLocaleDateString('zh-CN');
-    }
-    
-    loadAntibodies();
-}
-
-function loadAntibodies(page = 1) {
-    const tbody = document.getElementById('antibody-tbody');
-    if (!tbody) return;
-    
-    const antibodies = JSON.parse(localStorage.getItem(STORAGE_KEYS.ANTIBODIES)) || [];
-    const user = getCurrentUser();
-    const admin = isAdmin();
-    
-    antibodies.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    const pageSize = 10;
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const pageData = antibodies.slice(start, end);
-    
-    tbody.innerHTML = '';
-    
-    pageData.forEach(ab => {
-        const row = document.createElement('tr');
-        row.setAttribute('onclick', `showAntibodyDetail(${ab.id})`);
-        
-        const canDelete = admin || (ab.uploader === user?.name);
-        
-        row.innerHTML = `
-            <td>${ab.id}</td>
-            <td><strong>${ab.name}</strong></td>
-            <td>${ab.company}</td>
-            <td>${ab.catalog}</td>
-            <td>${ab.species}</td>
-            <td>${ab.type}</td>
-            <td>${ab.usage}</td>
-            <td class="storage-location">${ab.location}</td>
-            <td>${ab.date}</td>
-            <td>${ab.notes || '-'}</td>
-            <td>${ab.uploader}</td>
-            <td>
-                ${canDelete ? 
-                    `<a href="#" class="action-link delete" onclick="event.stopPropagation(); deleteAntibody(${ab.id})">删除</a>` : 
-                    '<span style="color:#999;">只读</span>'}
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-    
-    generatePagination('antibody', antibodies.length, page, pageSize);
-}
-
-function showAntibodyUploadForm() {
-    const modal = document.getElementById('antibodyUploadModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        const today = new Date().toISOString().split('T')[0];
-        const dateInput = document.getElementById('antibody-date');
-        if (dateInput) dateInput.value = today;
-    }
-}
-
-function hideAntibodyUploadForm() {
-    const modal = document.getElementById('antibodyUploadModal');
-    if (modal) {
-        modal.style.display = 'none';
-        const form = document.getElementById('antibodyUploadForm');
-        if (form) form.reset();
-    }
-}
-
-function handleAntibodyUpload(event) {
-    event.preventDefault();
-    
-    const user = getCurrentUser();
-    if (!user) {
-        alert('请先登录');
-        return false;
-    }
-    
-    const antibodyData = {
-        id: Date.now(),
-        name: document.getElementById('antibody-name').value.trim(),
-        company: document.getElementById('antibody-company').value.trim(),
-        catalog: document.getElementById('antibody-catalog').value.trim(),
-        species: document.getElementById('antibody-species').value.trim(),
-        type: document.getElementById('antibody-type').value,
-        usage: document.getElementById('antibody-usage').value.trim(),
-        location: document.getElementById('antibody-location').value.trim(),
-        date: document.getElementById('antibody-date').value,
-        notes: document.getElementById('antibody-notes').value.trim(),
-        uploader: user.name,
-        uploaderId: user.id
-    };
-    
-    if (!antibodyData.name || !antibodyData.company || !antibodyData.catalog || 
-        !antibodyData.species || !antibodyData.type || !antibodyData.usage || 
-        !antibodyData.location || !antibodyData.date) {
-        alert('请填写所有必填项（带*的字段）');
-        return false;
-    }
-    
-    const antibodies = JSON.parse(localStorage.getItem(STORAGE_KEYS.ANTIBODIES)) || [];
-    antibodies.push(antibodyData);
-    localStorage.setItem(STORAGE_KEYS.ANTIBODIES, JSON.stringify(antibodies));
-    
-    sessionStorage.setItem('lastUpdate', new Date().toLocaleDateString('zh-CN'));
-    
-    alert('上传成功！');
-    hideAntibodyUploadForm();
-    loadAntibodies();
-    
-    return false;
-}
-
-function deleteAntibody(id) {
-    if (!confirm('确定要删除这条抗体记录吗？')) return;
-    
-    const user = getCurrentUser();
-    const antibodies = JSON.parse(localStorage.getItem(STORAGE_KEYS.ANTIBODIES)) || [];
-    const antibody = antibodies.find(a => a.id === id);
-    
-    if (!isAdmin() && antibody.uploader !== user?.name) {
-        alert('只有管理员可以删除他人的记录');
-        return;
-    }
-    
-    const newAntibodies = antibodies.filter(a => a.id !== id);
-    localStorage.setItem(STORAGE_KEYS.ANTIBODIES, JSON.stringify(newAntibodies));
-    
-    sessionStorage.setItem('lastUpdate', new Date().toLocaleDateString('zh-CN'));
-    
-    alert('删除成功');
-    loadAntibodies();
-}
-
-function showAntibodyDetail(id) {
-    const antibodies = JSON.parse(localStorage.getItem(STORAGE_KEYS.ANTIBODIES)) || [];
-    const ab = antibodies.find(a => a.id === id);
-    
-    if (!ab) return;
-    
-    const detailContent = document.getElementById('antibodyDetailContent');
-    detailContent.innerHTML = `
-        <div class="detail-item"><span class="detail-label">抗体名称：</span><span class="detail-value">${ab.name}</span></div>
-        <div class="detail-item"><span class="detail-label">公司：</span><span class="detail-value">${ab.company}</span></div>
-        <div class="detail-item"><span class="detail-label">货号：</span><span class="detail-value">${ab.catalog}</span></div>
-        <div class="detail-item"><span class="detail-label">种属：</span><span class="detail-value">${ab.species}</span></div>
-        <div class="detail-item"><span class="detail-label">类型：</span><span class="detail-value">${ab.type}</span></div>
-        <div class="detail-item"><span class="detail-label">用途：</span><span class="detail-value">${ab.usage}</span></div>
-        <div class="detail-item"><span class="detail-label">储存位置：</span><span class="detail-value">${ab.location}</span></div>
-        <div class="detail-item"><span class="detail-label">到货日期：</span><span class="detail-value">${ab.date}</span></div>
-        <div class="detail-item"><span class="detail-label">备注：</span><span class="detail-value">${ab.notes || '-'}</span></div>
-        <div class="detail-item"><span class="detail-label">添加人：</span><span class="detail-value">${ab.uploader}</span></div>
-    `;
-    
-    document.getElementById('detailModal').style.display = 'flex';
-}
-
-function searchAntibodyTable() {
-    const searchInput = document.getElementById('search-antibody');
-    const filterSelect = document.getElementById('filter-antibody');
-    
-    if (!searchInput) return;
-    
-    const searchTerm = searchInput.value.toLowerCase();
-    const filterValue = filterSelect.value;
-    const user = getCurrentUser();
-    const admin = isAdmin();
-    
-    let data = JSON.parse(localStorage.getItem(STORAGE_KEYS.ANTIBODIES)) || [];
-    
-    if (filterValue === 'mine') {
-        data = data.filter(item => item.uploader === user?.name);
-    } else if (filterValue === 'primary') {
-        data = data.filter(item => item.type === '一抗');
-    } else if (filterValue === 'secondary') {
-        data = data.filter(item => item.type === '二抗');
-    } else if (filterValue === 'other') {
-        data = data.filter(item => item.type === '其它');
-    }
-    
-    if (searchTerm) {
-        data = data.filter(item => 
-            item.name.toLowerCase().includes(searchTerm) ||
-            item.company.toLowerCase().includes(searchTerm) ||
-            item.catalog.toLowerCase().includes(searchTerm) ||
-            item.usage.toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    const tbody = document.getElementById('antibody-tbody');
-    tbody.innerHTML = '';
-    
-    data.slice(0, 10).forEach(ab => {
-        const row = document.createElement('tr');
-        const canDelete = admin || (ab.uploader === user?.name);
-        row.innerHTML = `
-            <td>${ab.id}</td>
-            <td><strong>${ab.name}</strong></td>
-            <td>${ab.company}</td>
-            <td>${ab.catalog}</td>
-            <td>${ab.species}</td>
-            <td>${ab.type}</td>
-            <td>${ab.usage}</td>
-            <td>${ab.location}</td>
-            <td>${ab.date}</td>
-            <td>${ab.notes || '-'}</td>
-            <td>${ab.uploader}</td>
-            <td>${canDelete ? '可删除' : '只读'}</td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-function exportAntibodyTable() {
-    let data = JSON.parse(localStorage.getItem(STORAGE_KEYS.ANTIBODIES)) || [];
-    
-    let csv = 'ID,名称,公司,货号,种属,类型,用途,储存位置,到货日期,备注,添加人\n';
-    data.forEach(item => {
-        csv += `${item.id},${item.name},${item.company},${item.catalog},${item.species},${item.type},${item.usage},${item.location},${item.date},${item.notes || ''},${item.uploader}\n`;
-    });
-    
-    downloadCSV(csv, `抗体台账_${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-// ==================== 特殊试剂页面函数 ====================
-function initReagentsPage() {
-    const user = checkLogin();
-    if (!user) return;
-    
-    const userSpan = document.getElementById('currentUser');
-    if (userSpan) userSpan.textContent = `👤 ${user.name}`;
-    
-    const lastUpdateSpan = document.getElementById('lastUpdate');
-    if (lastUpdateSpan) {
-        lastUpdateSpan.textContent = sessionStorage.getItem('lastUpdate') || new Date().toLocaleDateString('zh-CN');
-    }
-    
-    loadReagents();
-}
-
-function loadReagents(page = 1) {
-    const tbody = document.getElementById('reagent-tbody');
-    if (!tbody) return;
-    
-    const reagents = JSON.parse(localStorage.getItem(STORAGE_KEYS.REAGENTS)) || [];
-    const user = getCurrentUser();
-    const admin = isAdmin();
-    const today = new Date();
-    
-    reagents.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    const pageSize = 10;
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const pageData = reagents.slice(start, end);
-    
-    tbody.innerHTML = '';
-    
-    pageData.forEach(reagent => {
-        const row = document.createElement('tr');
-        row.setAttribute('onclick', `showReagentDetail(${reagent.id})`);
-        
-        const expiryDate = new Date(reagent.expiry);
-        const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-        let expiryClass = '';
-        if (daysUntilExpiry < 0) {
-            expiryClass = 'expiry-expired';
-        } else if (daysUntilExpiry <= 30) {
-            expiryClass = 'expiry-warning';
-        }
-        
-        const canDelete = admin || (reagent.uploader === user?.name);
-        
-        row.innerHTML = `
-            <td>${reagent.id}</td>
-            <td><strong>${reagent.name}</strong></td>
-            <td>${reagent.usage}</td>
-            <td>${reagent.company}</td>
-            <td>${reagent.catalog}</td>
-            <td class="${expiryClass}">${reagent.expiry}</td>
-            <td>${reagent.date}</td>
-            <td class="storage-location">${reagent.location}</td>
-            <td>${reagent.notes || '-'}</td>
-            <td>${reagent.uploader}</td>
-            <td>
-                ${canDelete ? 
-                    `<a href="#" class="action-link delete" onclick="event.stopPropagation(); deleteReagent(${reagent.id})">删除</a>` : 
-                    '<span style="color:#999;">只读</span>'}
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-    
-    generatePagination('reagent', reagents.length, page, pageSize);
-}
-
-function showReagentUploadForm() {
-    const modal = document.getElementById('reagentUploadModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('reagent-date').value = today;
-        
-        const oneYearLater = new Date();
-        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-        document.getElementById('reagent-expiry').value = oneYearLater.toISOString().split('T')[0];
-    }
-}
-
-function hideReagentUploadForm() {
-    const modal = document.getElementById('reagentUploadModal');
-    if (modal) {
-        modal.style.display = 'none';
-        const form = document.getElementById('reagentUploadForm');
-        if (form) form.reset();
-    }
-}
-
-function handleReagentUpload(event) {
-    event.preventDefault();
-    
-    const user = getCurrentUser();
-    if (!user) {
-        alert('请先登录');
-        return false;
-    }
-    
-    const reagentData = {
-        id: Date.now(),
-        name: document.getElementById('reagent-name').value.trim(),
-        usage: document.getElementById('reagent-usage').value.trim(),
-        company: document.getElementById('reagent-company').value.trim(),
-        catalog: document.getElementById('reagent-catalog').value.trim(),
-        expiry: document.getElementById('reagent-expiry').value,
-        date: document.getElementById('reagent-date').value,
-        location: document.getElementById('reagent-location').value.trim(),
-        notes: document.getElementById('reagent-notes').value.trim(),
-        uploader: user.name,
-        uploaderId: user.id
-    };
-    
-    if (!reagentData.name || !reagentData.usage || !reagentData.company || 
-        !reagentData.catalog || !reagentData.expiry || !reagentData.date || !reagentData.location) {
-        alert('请填写所有必填项（带*的字段）');
-        return false;
-    }
-    
-    const reagents = JSON.parse(localStorage.getItem(STORAGE_KEYS.REAGENTS)) || [];
-    reagents.push(reagentData);
-    localStorage.setItem(STORAGE_KEYS.REAGENTS, JSON.stringify(reagents));
-    
-    sessionStorage.setItem('lastUpdate', new Date().toLocaleDateString('zh-CN'));
-    
-    alert('上传成功！');
-    hideReagentUploadForm();
-    loadReagents();
-    
-    return false;
-}
-
-function deleteReagent(id) {
-    if (!confirm('确定要删除这条试剂记录吗？')) return;
-    
-    const user = getCurrentUser();
-    const reagents = JSON.parse(localStorage.getItem(STORAGE_KEYS.REAGENTS)) || [];
-    const reagent = reagents.find(r => r.id === id);
-    
-    if (!isAdmin() && reagent.uploader !== user?.name) {
-        alert('只有管理员可以删除他人的记录');
-        return;
-    }
-    
-    const newReagents = reagents.filter(r => r.id !== id);
-    localStorage.setItem(STORAGE_KEYS.REAGENTS, JSON.stringify(newReagents));
-    
-    sessionStorage.setItem('lastUpdate', new Date().toLocaleDateString('zh-CN'));
-    
-    alert('删除成功');
-    loadReagents();
-}
-
-function showReagentDetail(id) {
-    const reagents = JSON.parse(localStorage.getItem(STORAGE_KEYS.REAGENTS)) || [];
-    const reagent = reagents.find(r => r.id === id);
-    
-    if (!reagent) return;
-    
-    const detailContent = document.getElementById('reagentDetailContent');
-    detailContent.innerHTML = `
-        <div class="detail-item"><span class="detail-label">试剂名称：</span><span class="detail-value">${reagent.name}</span></div>
-        <div class="detail-item"><span class="detail-label">用途：</span><span class="detail-value">${reagent.usage}</span></div>
-        <div class="detail-item"><span class="detail-label">公司：</span><span class="detail-value">${reagent.company}</span></div>
-        <div class="detail-item"><span class="detail-label">货号：</span><span class="detail-value">${reagent.catalog}</span></div>
-        <div class="detail-item"><span class="detail-label">有效期：</span><span class="detail-value">${reagent.expiry}</span></div>
-        <div class="detail-item"><span class="detail-label">到货日期：</span><span class="detail-value">${reagent.date}</span></div>
-        <div class="detail-item"><span class="detail-label">存储位置：</span><span class="detail-value">${reagent.location}</span></div>
-        <div class="detail-item"><span class="detail-label">备注：</span><span class="detail-value">${reagent.notes || '-'}</span></div>
-        <div class="detail-item"><span class="detail-label">添加人：</span><span class="detail-value">${reagent.uploader}</span></div>
-    `;
-    
-    document.getElementById('detailModal').style.display = 'flex';
-}
-
-function searchReagentTable() {
-    const searchInput = document.getElementById('search-reagent');
-    const filterSelect = document.getElementById('filter-reagent');
-    
-    if (!searchInput) return;
-    
-    const searchTerm = searchInput.value.toLowerCase();
-    const filterValue = filterSelect.value;
-    const user = getCurrentUser();
-    const admin = isAdmin();
-    const today = new Date();
-    
-    let data = JSON.parse(localStorage.getItem(STORAGE_KEYS.REAGENTS)) || [];
-    
-    if (filterValue === 'mine') {
-        data = data.filter(item => item.uploader === user?.name);
-    } else if (filterValue === 'expiring') {
-        data = data.filter(item => {
-            const expiryDate = new Date(item.expiry);
-            const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-            return daysUntilExpiry <= 30 && daysUntilExpiry >= 0;
-        });
-    } else if (filterValue === 'expired') {
-        data = data.filter(item => new Date(item.expiry) < today);
-    }
-    
-    if (searchTerm) {
-        data = data.filter(item => 
-            item.name.toLowerCase().includes(searchTerm) ||
-            item.usage.toLowerCase().includes(searchTerm) ||
-            item.company.toLowerCase().includes(searchTerm) ||
-            item.catalog.toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    const tbody = document.getElementById('reagent-tbody');
-    tbody.innerHTML = '';
-    
-    data.slice(0, 10).forEach(reagent => {
-        const row = document.createElement('tr');
-        const canDelete = admin || (reagent.uploader === user?.name);
-        
-        const expiryDate = new Date(reagent.expiry);
-        const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-        let expiryClass = '';
-        if (daysUntilExpiry < 0) {
-            expiryClass = 'expiry-expired';
-        } else if (daysUntilExpiry <= 30) {
-            expiryClass = 'expiry-warning';
-        }
-        
-        row.innerHTML = `
-            <td>${reagent.id}</td>
-            <td><strong>${reagent.name}</strong></td>
-            <td>${reagent.usage}</td>
-            <td>${reagent.company}</td>
-            <td>${reagent.catalog}</td>
-            <td class="${expiryClass}">${reagent.expiry}</td>
-            <td>${reagent.date}</td>
-            <td>${reagent.location}</td>
-            <td>${reagent.notes || '-'}</td>
-            <td>${reagent.uploader}</td>
-            <td>${canDelete ? '可删除' : '只读'}</td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-function exportReagentTable() {
-    let data = JSON.parse(localStorage.getItem(STORAGE_KEYS.REAGENTS)) || [];
-    
-    let csv = 'ID,名称,用途,公司,货号,有效期,到货日期,存储位置,备注,添加人\n';
-    data.forEach(item => {
-        csv += `${item.id},${item.name},${item.usage},${item.company},${item.catalog},${item.expiry},${item.date},${item.location},${item.notes || ''},${item.uploader}\n`;
-    });
-    
-    downloadCSV(csv, `特殊试剂台账_${new Date().toISOString().split('T')[0]}.csv`);
+    alert('导出功能正在升级中，请稍后再试');
 }
 
 // ==================== 生成分页 ====================
