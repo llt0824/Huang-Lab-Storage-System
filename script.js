@@ -1,6 +1,4 @@
 // ==================== API 配置 ====================
-const API_BASE = 'https://huanglabstoragesystem.xyz/api';  // 你的域名
-// 如果自定义域名HTTPS还没生效，可以用Vercel域名
 // const API_BASE = 'https://huang-lab-storage-system.vercel.app/api';
 
 // ==================== 全局变量和配置 ====================
